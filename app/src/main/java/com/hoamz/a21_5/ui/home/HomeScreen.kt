@@ -1,56 +1,46 @@
 package com.hoamz.a21_5.ui.home
 
-import android.Manifest
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.hoamz.a21_5.R
 import com.hoamz.a21_5.databinding.FragmentHomeScreenBinding
-import com.hoamz.a21_5.service.MyService
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 class HomeScreen : Fragment() {
+
     private val CLASS_NAME = javaClass.simpleName
-    private lateinit var context: Context
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        this.context = context
-    }
-
     private var _binding: FragmentHomeScreenBinding? = null
     private val binding get() = _binding!!
 
-    private val registerPostNotificationLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            startService()
-        } else {
-            Toast.makeText(context, "Quyen khong duoc cap", Toast.LENGTH_SHORT).show()
-        }
-    }
+    private var mInterstitialAd: InterstitialAd? = null
 
+    private var isUserWaitingForAd: Boolean = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            //receive data
+
         }
+        loadInterstitialAd()
     }
 
+
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentHomeScreenBinding.inflate(inflater, container, false)
@@ -59,60 +49,121 @@ class HomeScreen : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.apply {
-            btnStartService.setOnClickListener {
-                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) {
-                    checkAndRequestPermissionPostNotification()
-                }
-            }
 
-            btnStopService.setOnClickListener {
-                val intent = Intent(context, MyService::class.java)
-                context.stopService(intent)
+        loadBannerAds()
+
+        binding.apply {
+            //show interstitial ads
+            btnShowAdsMod.setOnClickListener {
+                showInterstitialAds()
+            }
+            //nav to rewardScreen
+            btnNavToReward.setOnClickListener {
+                findNavController().navigate(R.id.action_homeScreen_to_rewardScreen)
             }
         }
     }
 
-    private fun checkAndRequestPermissionPostNotification() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            when {
-                ContextCompat.checkSelfPermission(
-                    context, Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED -> {
-                    //permission is granted
-                    startService()
+    private fun loadBannerAds() {
+        val requestBannerAds = AdRequest.Builder().build()
+        binding.adViewBanner.loadAd(requestBannerAds)
+        binding.adViewBanner.adListener = object : AdListener(){
+            override fun onAdClicked() {
+                super.onAdClicked()
+                Log.d(CLASS_NAME,"clicked banner ads")
+            }
+
+            override fun onAdOpened() {
+                super.onAdOpened()
+                Log.d(CLASS_NAME,"opened banner ads")
+            }
+
+            override fun onAdClosed() {
+                super.onAdClosed()
+                Log.d(CLASS_NAME,"closed banner ads")
+            }
+        }
+    }
+
+    private fun loadInterstitialAd() {
+        val requestAd = AdRequest.Builder().build()
+        val adUnitId = "ca-app-pub-3940256099942544/1033173712"
+        InterstitialAd.load(
+            requireContext(), adUnitId, requestAd, object : InterstitialAdLoadCallback() {
+                override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                    super.onAdLoaded(interstitialAd)
+                    mInterstitialAd = interstitialAd
+                    setUpInterstitialAdCallback()
+                    if (isUserWaitingForAd) {
+                        isUserWaitingForAd = false
+                        showInterstitialAds()
+                    }
                 }
 
-                ActivityCompat.shouldShowRequestPermissionRationale(
-                    requireActivity(), Manifest.permission.POST_NOTIFICATIONS
-                ) -> {
-                    AlertDialog.Builder(context).setTitle("Yeu cau cap quyen thong bao")
-                        .setMessage("Ung dung can quyen thong bao, vui long cap quyen")
-                        .setPositiveButton("Accept") { _, _ ->
-                            registerPostNotificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        }.setNegativeButton("Deny") { _, _ ->
-                            Log.e(CLASS_NAME, "User khong cap quyen")
-                        }.show()
+                override fun onAdFailedToLoad(interstitialAd: LoadAdError) {
+                    super.onAdFailedToLoad(interstitialAd)
+                    if (isUserWaitingForAd) {
+                        isUserWaitingForAd = false
+                        hideProgressBarLoadingAds()
+                    }
                 }
+            })
+    }
 
-                else -> {
-                    registerPostNotificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
+    private fun setUpInterstitialAdCallback() {
+        mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdClicked() {
+                super.onAdClicked()
+                Log.d(CLASS_NAME, "user clicked ad")
+            }
+
+            override fun onAdDismissedFullScreenContent() {
+                super.onAdDismissedFullScreenContent()
+                Log.d(CLASS_NAME, "user clicked x")
+                loadInterstitialAd()
+            }
+        }
+    }
+
+    fun showInterstitialAds() {
+        if (mInterstitialAd != null) {
+            viewLifecycleOwner.lifecycleScope.launch {
+                showProgressBarLoadingAds()
+                delay(800)
+                hideProgressBarLoadingAds()
+                mInterstitialAd?.show(requireActivity())
             }
         } else {
-            startService()
+            isUserWaitingForAd = true
+            showProgressBarLoadingAds()
         }
     }
 
-    private fun startService() {
-        val intent = Intent(context, MyService::class.java)
-        intent.putExtra("SV", "data to noti")
-        context.startService(intent)
+    private fun showProgressBarLoadingAds() {
+        binding.partialProgressbar.root.visibility = View.VISIBLE
     }
 
+    private fun hideProgressBarLoadingAds() {
+        binding.partialProgressbar.root.visibility = View.INVISIBLE
+    }
+
+    override fun onResume() {
+        super.onResume()
+        binding.adViewBanner.resume()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        binding.adViewBanner.pause()
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        binding.adViewBanner.destroy()
         _binding = null
     }
+
+
+
+
 }

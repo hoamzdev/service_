@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/white"
     android:fitsSystemWindows="true"
-    tools:context=".ui.home.HomeScreen">
+    tools:context=".ui.home.RewardScreen">
 
 
     <androidx.appcompat.widget.AppCompatButton
@@ -23,35 +23,6 @@
         app:layout_constraintBottom_toTopOf="@id/gl_bottom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/btn_nav_to_reward"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="30dp"
-        android:layout_marginBottom="20dp"
-        android:background="@drawable/btn_normal"
-        android:paddingHorizontal="10dp"
-        android:paddingVertical="16dp"
-        android:text="@string/nav_to_reward_screen"
-        android:textAllCaps="false"
-        android:textColor="@color/white"
-        app:layout_constraintBottom_toTopOf="@id/btn_show_adsMod"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
-
-    <com.google.android.gms.ads.AdView xmlns:ads="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/ad_view_banner"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        ads:adSize="BANNER"
-        ads:adUnitId="ca-app-pub-3940256099942544/6300978111"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_show_adsMod" />
-
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/gl_bottom"
