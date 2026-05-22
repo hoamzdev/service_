@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_app_screen"
-    app:startDestination="@id/homeScreen">
+    app:startDestination="@id/testFragment">
 
     <fragment
         android:id="@+id/homeScreen"
@@ -19,4 +19,9 @@
         android:name="com.hoamz.a21_5.ui.home.RewardScreen"
         android:label="fragment_reward_screen"
         tools:layout="@layout/fragment_reward_screen" />
+    <fragment
+        android:id="@+id/testFragment"
+        android:name="com.hoamz.a21_5.TestFragment"
+        android:label="fragment_test"
+        tools:layout="@layout/fragment_test" />
 </navigation>
