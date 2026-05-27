@@ -73,4 +73,9 @@ dependencies {
     //hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
+
+    //dimen
+    implementation(libs.dimenlib)
+    implementation(libs.dimensplib)
+
 }
